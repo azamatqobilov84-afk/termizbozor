@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Barcha mahsulotlar — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            🛒 Mahsulotlar
+        </h1>
+        <p class="text-gray-600">Barcha mahsulotlarning eng arzon narxlarini toping</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <form method="get" class="flex flex-col md:flex-row gap-3">
+            <!-- Search -->
+            <div class="flex-1">
+                <input type="text" name="q" value="{{ search }}" placeholder="🔍 Mahsulot qidirish..."
+                       class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary-500 focus:outline-none">
+            </div>
+
+            <!-- Category -->
+            <select name="category" class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary-500 focus:outline-none">
+                <option value="">📋 Barcha kategoriyalar</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>
+                        {{ cat.icon }} {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Sort -->
+            <select name="sort" class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary-500 focus:outline-none">
+                <option value="name" {% if sort == 'name' %}selected{% endif %}>Nomi bo'yicha</option>
+                <option value="category" {% if sort == 'category' %}selected{% endif %}>Kategoriya bo'yicha</option>
+            </select>
+
+            <button type="submit" class="px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition">
+                Qidirish
+            </button>
+        </form>
+    </div>
+
+    <!-- Quick Categories -->
+    <div class="flex flex-wrap gap-2 mb-6 overflow-x-auto">
+        <a href="{% url 'products:list' %}" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition
+            {% if not selected_category %}bg-primary-600 text-white{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-50{% endif %}">
+            Hammasi
+        </a>
+        {% for cat in categories %}
+            <a href="{% url 'products:list' %}?category={{ cat.slug }}" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition
+                {% if selected_category == cat.slug %}bg-primary-600 text-white{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-50{% endif %}">
+                {{ cat.icon }} {{ cat.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <!-- Results count -->
+    <p class="text-sm text-gray-500 mb-4">
+        {{ products.paginator.count }} ta mahsulot topildi
+        {% if search %}<span class="font-medium">"{{ search }}"</span> uchun{% endif %}
+    </p>
+
+    <!-- Product Grid -->
+    {% if products %}
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {% for product in products %}
+                <a href="{{ product.get_absolute_url }}" class="card-hover bg-white rounded-2xl p-5 border border-gray-100 group">
+                    <div class="text-5xl mb-3 text-center">{{ product.icon }}</div>
+                    <div class="text-xs text-primary-600 font-medium mb-1">{{ product.category.name }}</div>
+                    <h3 class="font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition truncate">{{ product.name }}</h3>
+
+                    {% if product.cheapest %}
+                        <div class="space-y-1">
+                            <div class="text-xs text-gray-500">eng arzon:</div>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-xl font-bold text-primary-600">{{ product.cheapest.formatted_price }}</span>
+                                <span class="text-xs text-gray-500">so'm</span>
+                            </div>
+                            <div class="text-xs text-gray-500 truncate flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full" style="background: {{ product.cheapest.market.color }}"></span>
+                                {{ product.cheapest.market.name|truncatewords:2 }}
+                            </div>
+                            {% if product.market_count > 1 %}
+                                <div class="text-xs text-gray-400 pt-1 border-t border-gray-50">
+                                    {{ product.market_count }} bozorda mavjud
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-sm text-gray-400">Narx yo'q</div>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+            <div class="flex justify-center gap-2 mt-10">
+                {% if products.has_previous %}
+                    <a href="?page={{ products.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">← Oldingi</a>
+                {% endif %}
+                <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">{{ products.number }} / {{ products.paginator.num_pages }}</span>
+                {% if products.has_next %}
+                    <a href="?page={{ products.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Keyingi →</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-12 text-center">
+            <div class="text-6xl mb-4">🔍</div>
+            <h3 class="font-bold text-xl text-gray-900 mb-2">Hech narsa topilmadi</h3>
+            <p class="text-gray-600 mb-4">Boshqa kalit so'z yoki kategoriya tanlab ko'ring</p>
+            <a href="{% url 'products:list' %}" class="inline-block px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                Barcha mahsulotlarni ko'rish
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

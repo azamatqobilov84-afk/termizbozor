@@ -1,0 +1,1 @@
+web: gunicorn termiz_bozor.wsgi

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Termiz bozorlari xaritasi{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+        <h1 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            📍 Termiz bozorlari xaritasi
+        </h1>
+        <p class="text-gray-600">{{ markets.count }} ta yirik bozor — sizga eng yaqinini topish uchun</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Map -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+                <div id="main-map" style="height: 600px; border-radius: 1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Markets list -->
+        <div class="space-y-3">
+            <h3 class="font-bold text-lg text-gray-900 mb-3">Bozorlar ro'yxati</h3>
+            {% for market in markets %}
+                <a href="{{ market.get_absolute_url }}" data-lat="{{ market.latitude }}" data-lng="{{ market.longitude }}" data-name="{{ market.name }}"
+                   class="market-item card-hover block bg-white rounded-xl p-4 border border-gray-100 hover:border-primary-300">
+                    <div class="flex items-start gap-3">
+                        <div class="w-3 h-12 rounded-full flex-shrink-0" style="background: {{ market.color }}"></div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-gray-900 truncate">{{ market.name }}</h4>
+                            <p class="text-xs text-gray-500 truncate">📍 {{ market.address }}</p>
+                            <p class="text-xs text-gray-500 mt-1">🕐 {{ market.working_hours }}</p>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Termiz markazi
+    const map = L.map('main-map').setView([37.225, 67.278], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19
+    }).addTo(map);
+
+    const markers = {};
+
+    {% for market in markets %}
+        (function(){
+            const icon = L.divIcon({
+                html: `<div style="background: {{ market.color }}; width: 44px; height: 44px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; font-size: 22px;">🏪</div>`,
+                className: '',
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
+            });
+
+            const marker = L.marker([{{ market.latitude }}, {{ market.longitude }}], { icon }).addTo(map);
+            marker.bindPopup(`
+                <div style="font-family: Inter; min-width: 220px;">
+                    <strong style="font-size: 14px;">{{ market.name|escapejs }}</strong><br>
+                    <small>📍 {{ market.address|escapejs }}</small><br>
+                    <small>🕐 {{ market.working_hours }}</small><br>
+                    <a href="{{ market.get_absolute_url }}" style="color: #16a34a; font-weight: 600; margin-top: 8px; display: inline-block;">Mahsulotlarni ko'rish →</a>
+                </div>
+            `);
+
+            markers['{{ market.id }}'] = marker;
+        })();
+    {% endfor %}
+
+    // Click on list item shows on map
+    document.querySelectorAll('.market-item').forEach(item => {
+        item.addEventListener('mouseenter', function(e) {
+            const lat = parseFloat(this.dataset.lat);
+            const lng = parseFloat(this.dataset.lng);
+            map.flyTo([lat, lng], 16, { duration: 0.5 });
+        });
+    });
+
+    // Try to get user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            const userIcon = L.divIcon({
+                html: `<div style="background: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+                className: '',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            L.marker([userLat, userLng], { icon: userIcon }).addTo(map)
+                .bindPopup('📍 Sizning joylashuvingiz').openPopup();
+        });
+    }
+});
+</script>
+{% endblock %}

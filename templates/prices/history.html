@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Narx tarixi — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <div class="mb-8">
+        <h1 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            📈 Narxlar tarixi
+        </h1>
+        <p class="text-gray-600">Mahsulot narxlarining vaqt o'tishi bilan o'zgarishini kuzating</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-8">
+        <form method="get" class="flex flex-col md:flex-row gap-3">
+            <select name="product" class="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary-500 focus:outline-none">
+                <option value="">Mahsulot tanlang...</option>
+                {% for product in products %}
+                    <option value="{{ product.id }}" {% if selected_product.id == product.id %}selected{% endif %}>
+                        {{ product.icon }} {{ product.name }} ({{ product.category.name }})
+                    </option>
+                {% endfor %}
+            </select>
+            <select name="days" class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary-500 focus:outline-none">
+                <option value="7" {% if days == 7 %}selected{% endif %}>Oxirgi 7 kun</option>
+                <option value="14" {% if days == 14 %}selected{% endif %}>Oxirgi 14 kun</option>
+                <option value="30" {% if days == 30 %}selected{% endif %}>Oxirgi 30 kun</option>
+                <option value="60" {% if days == 60 %}selected{% endif %}>Oxirgi 60 kun</option>
+            </select>
+            <button type="submit" class="px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition">
+                Ko'rsatish
+            </button>
+        </form>
+    </div>
+
+    <!-- Chart -->
+    {% if chart_data and selected_product %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="text-5xl">{{ selected_product.icon }}</div>
+                <div>
+                    <h2 class="font-display text-2xl font-bold text-gray-900">{{ selected_product.name }}</h2>
+                    <p class="text-sm text-gray-500">{{ selected_product.category.name }} • {{ selected_product.display_unit }} • Oxirgi {{ days }} kun</p>
+                </div>
+            </div>
+            <div class="relative h-96">
+                <canvas id="historyChart"></canvas>
+            </div>
+        </div>
+
+        {{ chart_data|json_script:"chart-history-data" }}
+    {% else %}
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 text-center mb-8">
+            <div class="text-5xl mb-3">📊</div>
+            <h3 class="font-bold text-lg text-gray-900 mb-2">Mahsulot tanlang</h3>
+            <p class="text-gray-600">Yuqoridagi formadan mahsulotni tanlang va narxlarning o'zgarishini ko'ring</p>
+        </div>
+    {% endif %}
+
+    <!-- Top Movers -->
+    {% if top_movers %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="font-display text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+            🔥 Eng ko'p o'zgargan mahsulotlar
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">Oxirgi 7 kun ichida narxi eng ko'p o'zgargan mahsulotlar (oldingi 7 kunga nisbatan)</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {% for item in top_movers %}
+                <a href="{{ item.product.get_absolute_url }}" class="card-hover flex items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-primary-200">
+                    <span class="text-3xl">{{ item.product.icon }}</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-gray-900 truncate">{{ item.product.name }}</div>
+                        <div class="text-xs text-gray-500">
+                            {{ item.old_price|floatformat:0|intcomma }} → {{ item.new_price|floatformat:0|intcomma }} so'm
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        {% if item.change > 0 %}
+                            <div class="font-bold text-red-600 flex items-center gap-1">
+                                ↑ +{{ item.change|floatformat:1 }}%
+                            </div>
+                        {% else %}
+                            <div class="font-bold text-green-600 flex items-center gap-1">
+                                ↓ {{ item.change|floatformat:1 }}%
+                            </div>
+                        {% endif %}
+                        <div class="text-xs text-gray-400">Oxirgi 7 kun</div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if chart_data and selected_product %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = JSON.parse(document.getElementById('chart-history-data').textContent);
+    const ctx = document.getElementById('historyChart').getContext('2d');
+
+    const allDates = new Set();
+    Object.values(chartData).forEach(market => {
+        market.data.forEach(d => allDates.add(d.date));
+    });
+    const sortedDates = Array.from(allDates).sort();
+
+    const datasets = Object.entries(chartData).map(([name, info]) => {
+        const dataMap = new Map(info.data.map(d => [d.date, d.price]));
+        return {
+            label: name,
+            data: sortedDates.map(date => dataMap.get(date) || null),
+            borderColor: info.color,
+            backgroundColor: info.color + '20',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 2,
+            pointHoverRadius: 6,
+            spanGaps: true,
+            borderWidth: 2,
+        };
+    });
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedDates.map(d => new Date(d).toLocaleDateString('uz-UZ', {day:'numeric', month:'short'})),
+            datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.85)',
+                    padding: 12,
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('ru-RU').replace(/,/g, ' ') + " so'm"
+                    }
+                }
+            },
+            scales: {
+                y: { ticks: { callback: v => v.toLocaleString('ru-RU').replace(/,/g, ' ') } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Sayt haqida — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+        <div class="text-6xl mb-4">🛒</div>
+        <h1 class="font-display text-4xl font-bold text-gray-900 mb-3">{{ site_name }} haqida</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Termiz shahridagi 5 ta yirik bozorda mahsulot narxlarini taqqoslash platformasi
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 text-center">
+            <div class="text-5xl mb-3">💰</div>
+            <h3 class="font-bold text-lg mb-2">Tejang</h3>
+            <p class="text-sm text-gray-600">Eng arzon bozorni topib, har xaridda pul tejang</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 text-center">
+            <div class="text-5xl mb-3">⏱️</div>
+            <h3 class="font-bold text-lg mb-2">Vaqt yutadi</h3>
+            <p class="text-sm text-gray-600">Bir necha bozorga borish o'rniga, eng arzonga to'g'ridan-to'g'ri</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 text-center">
+            <div class="text-5xl mb-3">📊</div>
+            <h3 class="font-bold text-lg mb-2">Aniq ma'lumot</h3>
+            <p class="text-sm text-gray-600">Har kuni yangilanadigan haqiqiy bozor narxlari</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+        <h2 class="font-display text-2xl font-bold text-gray-900 mb-4">🎯 Bizning maqsadimiz</h2>
+        <p class="text-gray-700 leading-relaxed mb-4">
+            Termiz shahri aholisiga qulay narxda sifatli mahsulotlar sotib olish imkoniyatini yaratish.
+            Biz har kuni 5 ta yirik bozordagi 70+ mahsulot narxlarini kuzatib, foydalanuvchilarga
+            eng arzon variantni taqdim etamiz.
+        </p>
+        <p class="text-gray-700 leading-relaxed">
+            Saytimiz orqali siz nafaqat narxlarni solishtirishingiz, balki butun savatchangiz uchun
+            qaysi bozor jami eng arzon ekanini ham bilib olishingiz mumkin.
+        </p>
+    </div>
+
+    <div class="bg-gradient-to-br from-primary-50 to-yellow-50 rounded-2xl border border-primary-200 p-8">
+        <h2 class="font-display text-2xl font-bold text-gray-900 mb-4">💡 Qanday ishlatish?</h2>
+        <ol class="space-y-3 text-gray-700">
+            <li class="flex items-start gap-3">
+                <span class="w-7 h-7 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">1</span>
+                <span>Bosh sahifadagi qidiruvdan foydalaning yoki "Mahsulotlar" bo'limiga kiring</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="w-7 h-7 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">2</span>
+                <span>Mahsulot tanlab, 5 ta bozordagi narxlarni solishtiring</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="w-7 h-7 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">3</span>
+                <span>Bir necha mahsulot uchun "Eng arzon" bo'limidan foydalaning — qaysi bozor jami eng arzon ekanligini bilamiz</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="w-7 h-7 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">4</span>
+                <span>"Xarita" bo'limidan eng yaqin bozorni toping</span>
+            </li>
+        </ol>
+    </div>
+</div>
+{% endblock %}

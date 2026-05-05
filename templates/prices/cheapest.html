@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Eng arzon bozorni topish — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="inline-block px-4 py-1.5 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium mb-3">
+            💰 AQLLI SAVATCHA
+        </div>
+        <h1 class="font-display text-3xl md:text-5xl font-bold text-gray-900 mb-3">
+            Qaysi bozor sizga arzon?
+        </h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+            Sotib olmoqchi bo'lgan mahsulotlaringizni belgilang va miqdorini kiriting.
+            Biz sizga qaysi bozorda jami eng arzon bo'lishini hisoblab beramiz.
+        </p>
+    </div>
+
+    <form method="get" x-data="cartBuilder()">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- LEFT: Product Selection -->
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-display text-xl font-bold text-gray-900">
+                        🛒 Mahsulotlarni tanlang
+                    </h2>
+                    <span class="text-sm text-gray-500" x-text="`${selectedCount} ta tanlangan`">0 ta tanlangan</span>
+                </div>
+
+                <!-- Search -->
+                <input type="text" x-model="search" placeholder="🔍 Mahsulotni qidiring..."
+                       class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary-500 focus:outline-none mb-4">
+
+                <!-- Category tabs -->
+                <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <button type="button" @click="activeCategory = ''"
+                            :class="activeCategory === '' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">
+                        Hammasi
+                    </button>
+                    {% for cat in categories %}
+                        <button type="button" @click="activeCategory = '{{ cat.slug }}'"
+                                :class="activeCategory === '{{ cat.slug }}' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">
+                            {{ cat.icon }} {{ cat.name }}
+                        </button>
+                    {% endfor %}
+                </div>
+
+                <!-- Products list -->
+                <div class="space-y-2 max-h-[600px] overflow-y-auto">
+                    {% for product in products %}
+                        <div x-show="(activeCategory === '' || activeCategory === '{{ product.category.slug }}') && (search === '' || '{{ product.name|lower }}'.includes(search.toLowerCase()))"
+                             class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl border border-transparent transition"
+                             :class="selected.includes({{ product.id }}) && 'bg-primary-50 border-primary-200'">
+                            <input type="checkbox" name="products" value="{{ product.id }}"
+                                   :checked="selected.includes({{ product.id }})"
+                                   @change="toggleProduct({{ product.id }})"
+                                   class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500">
+
+                            <span class="text-3xl">{{ product.icon }}</span>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 truncate">{{ product.name }}</div>
+                                <div class="text-xs text-gray-500">{{ product.category.name }} • {{ product.display_unit }}</div>
+                            </div>
+
+                            <div x-show="selected.includes({{ product.id }})" class="flex items-center gap-2">
+                                <button type="button" @click="changeQty({{ product.id }}, -1)" class="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold">−</button>
+                                <input type="number" name="qty_{{ product.id }}" :value="quantities[{{ product.id }}] || 1"
+                                       @input="quantities[{{ product.id }}] = parseFloat($event.target.value) || 1"
+                                       min="0.1" step="0.5"
+                                       class="w-16 text-center px-2 py-1 border border-gray-200 rounded-lg">
+                                <button type="button" @click="changeQty({{ product.id }}, 1)" class="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold">+</button>
+                                <span class="text-xs text-gray-500">{{ product.display_unit }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- RIGHT: Selected & Action -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sticky top-24">
+                    <h3 class="font-display text-xl font-bold text-gray-900 mb-4">
+                        🛍️ Sizning savatchangiz
+                    </h3>
+
+                    <div x-show="selected.length === 0" class="text-center py-8 text-gray-400">
+                        <div class="text-5xl mb-2">🛒</div>
+                        <p class="text-sm">Mahsulotlarni belgilang</p>
+                    </div>
+
+                    <div x-show="selected.length > 0" class="space-y-2 max-h-80 overflow-y-auto mb-4">
+                        <template x-for="id in selected" :key="id">
+                            <div class="flex items-center justify-between text-sm py-2 border-b border-gray-50">
+                                <span class="text-gray-700" x-text="getProductName(id)"></span>
+                                <span class="font-medium" x-text="(quantities[id] || 1) + ' ' + getProductUnit(id)"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <button type="submit" :disabled="selected.length === 0"
+                            class="w-full px-6 py-4 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition shadow-lg flex items-center justify-center gap-2">
+                        <span>💰 Eng arzonni topish</span>
+                    </button>
+
+                    <p class="text-xs text-gray-500 text-center mt-3">
+                        5 ta bozor bo'yicha solishtiramiz
+                    </p>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- RESULT Section -->
+    {% if result %}
+        <div class="mt-12 animate-slide-up">
+            <h2 class="font-display text-3xl font-bold text-center text-gray-900 mb-2">
+                📊 Natija
+            </h2>
+            <p class="text-center text-gray-600 mb-8">5 ta bozor bo'yicha taqqoslash</p>
+
+            {% if result.cheapest_market %}
+                <!-- Winner highlight -->
+                <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-2xl p-8 text-white mb-8">
+                    <div class="flex flex-col md:flex-row items-center gap-6">
+                        <div class="text-7xl">🏆</div>
+                        <div class="flex-1 text-center md:text-left">
+                            <div class="text-sm opacity-90 mb-1">ENG ARZON BOZOR</div>
+                            <h3 class="font-display text-3xl md:text-4xl font-bold mb-2">{{ result.cheapest_market.market.name }}</h3>
+                            <p class="opacity-90">📍 {{ result.cheapest_market.market.address }}</p>
+                            <p class="opacity-90">🕐 {{ result.cheapest_market.market.working_hours }}</p>
+                        </div>
+                        <div class="text-center md:text-right">
+                            <div class="text-sm opacity-90">JAMI SUMMA</div>
+                            <div class="font-display text-4xl md:text-5xl font-bold">{{ result.cheapest_market.total|floatformat:0|intcomma }}</div>
+                            <div class="text-sm opacity-90">so'm</div>
+                            {% if result.savings > 0 %}
+                                <div class="mt-3 inline-block px-4 py-1 bg-yellow-300 text-gray-900 rounded-full font-bold text-sm">
+                                    💰 {{ result.savings|floatformat:0|intcomma }} so'm tejaysiz
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All markets comparison -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+                    <h3 class="font-display text-xl font-bold text-gray-900 mb-4">📈 Barcha bozorlar bo'yicha</h3>
+                    <div class="space-y-3">
+                        {% for m in result.markets %}
+                            <div class="flex items-center gap-4 p-4 rounded-xl border-2
+                                {% if forloop.first %}border-green-300 bg-green-50
+                                {% elif forloop.last %}border-red-100 bg-red-50/30
+                                {% else %}border-gray-100{% endif %}">
+                                <div class="text-2xl font-bold w-12 text-center">
+                                    {% if forloop.first %}🏆{% else %}#{{ forloop.counter }}{% endif %}
+                                </div>
+                                <div class="w-1 h-14 rounded-full" style="background: {{ m.market.color }}"></div>
+                                <div class="flex-1 min-w-0">
+                                    <a href="{{ m.market.get_absolute_url }}" class="font-bold text-gray-900 hover:text-primary-600 block truncate">
+                                        {{ m.market.name }}
+                                    </a>
+                                    <div class="text-sm text-gray-500">
+                                        {{ m.available_count }} ta mahsulot mavjud
+                                        {% if m.missing_count %}<span class="text-red-500">• {{ m.missing_count }} yo'q</span>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold {% if forloop.first %}text-green-600{% elif forloop.last %}text-red-500{% else %}text-gray-900{% endif %}">
+                                        {{ m.total|floatformat:0|intcomma }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">so'm</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Smart cart - cheapest per item -->
+                {% if result.smart_cart %}
+                <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-sm border-2 border-yellow-300 p-6">
+                    <div class="flex items-start gap-3 mb-4">
+                        <div class="text-4xl">🧠</div>
+                        <div class="flex-1">
+                            <h3 class="font-display text-xl font-bold text-gray-900">Aqlli savatcha (har bir mahsulotni alohida bozordan)</h3>
+                            <p class="text-sm text-gray-600">Agar har bir mahsulotni eng arzon bozordan olsangiz</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-600">JAMI</div>
+                            <div class="font-display text-3xl font-bold text-yellow-700">{{ result.smart_total|floatformat:0|intcomma }}</div>
+                            <div class="text-xs text-gray-600">so'm</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        {% for item in result.smart_cart %}
+                            <div class="flex items-center gap-3 bg-white rounded-lg p-3">
+                                <span class="text-2xl">{{ item.product.icon }}</span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium text-gray-900 truncate">{{ item.product.name }}</div>
+                                    <div class="text-xs text-gray-500 flex items-center gap-1">
+                                        <span class="w-2 h-2 rounded-full" style="background: {{ item.market.color }}"></span>
+                                        {{ item.market.name|truncatewords:3 }}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-primary-600">{{ item.cost|floatformat:0|intcomma }} so'm</div>
+                                    <div class="text-xs text-gray-500">{{ item.qty }} {{ item.product.display_unit }} × {{ item.price|floatformat:0|intcomma }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function cartBuilder() {
+    const initialSelected = {{ selected_ids|safe }};
+    const initialQuantities = {};
+    {% for pid, qty in quantities.items %}initialQuantities[{{ pid }}] = {{ qty }};{% endfor %}
+
+    const productNames = {};
+    const productUnits = {};
+    {% for product in products %}
+        productNames[{{ product.id }}] = "{{ product.name|escapejs }}";
+        productUnits[{{ product.id }}] = "{{ product.display_unit|escapejs }}";
+    {% endfor %}
+
+    return {
+        search: '',
+        activeCategory: '',
+        selected: initialSelected,
+        quantities: initialQuantities,
+
+        get selectedCount() { return this.selected.length; },
+
+        toggleProduct(id) {
+            const idx = this.selected.indexOf(id);
+            if (idx > -1) {
+                this.selected.splice(idx, 1);
+            } else {
+                this.selected.push(id);
+                if (!this.quantities[id]) this.quantities[id] = 1;
+            }
+        },
+
+        changeQty(id, delta) {
+            const current = parseFloat(this.quantities[id]) || 1;
+            this.quantities[id] = Math.max(0.1, current + delta);
+        },
+
+        getProductName(id) { return productNames[id] || ''; },
+        getProductUnit(id) { return productUnits[id] || 'kg'; },
+    }
+}
+</script>
+{% endblock %}

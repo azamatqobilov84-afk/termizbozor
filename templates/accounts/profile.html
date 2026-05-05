@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Mening profilim — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Cover -->
+        <div class="h-32 bg-gradient-to-br from-primary-500 to-primary-700"></div>
+
+        <div class="px-8 pb-8">
+            <!-- Avatar -->
+            <div class="-mt-16 mb-6">
+                <div class="w-32 h-32 bg-white rounded-full p-2 shadow-lg inline-block">
+                    <div class="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-5xl font-bold">
+                        {{ user.first_name|first|default:user.username|first|upper }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <h1 class="font-display text-3xl font-bold text-gray-900 mb-1">
+                {{ user.get_full_name|default:user.username }}
+            </h1>
+            <p class="text-gray-500 mb-6">@{{ user.username }}</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <div class="text-xs font-medium text-gray-500 mb-1">Email</div>
+                    <div class="font-medium">{{ user.email|default:"—" }}</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <div class="text-xs font-medium text-gray-500 mb-1">Telefon</div>
+                    <div class="font-medium">{{ user.phone|default:"—" }}</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <div class="text-xs font-medium text-gray-500 mb-1">Roli</div>
+                    <div class="font-medium">{{ user.get_role_display }}</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <div class="text-xs font-medium text-gray-500 mb-1">Sevimli bozor</div>
+                    <div class="font-medium">{{ user.preferred_market.name|default:"Tanlanmagan" }}</div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+                {% if user.is_staff %}
+                    <a href="/admin/" class="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">⚙️ Admin panel</a>
+                {% endif %}
+                <a href="{% url 'accounts:logout' %}" class="px-5 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100">🚪 Chiqish</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
