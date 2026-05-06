@@ -1,2 +1,1 @@
-echo web: gunicorn config.wsgi:application > Procfile
-type Procfile
+web: gunicorn config.wsgi:application 
