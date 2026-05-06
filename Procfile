@@ -1,1 +1,2 @@
-web: gunicorn termiz_bozor.wsgi
+echo web: gunicorn config.wsgi:application > Procfile
+type Procfile
