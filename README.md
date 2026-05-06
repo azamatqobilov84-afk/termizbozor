@@ -214,3 +214,4 @@ Termiz shahri uchun ❤️ bilan yaratilgan.
 ---
 
 **Savollaringiz bormi?** Admin panelda ma'lumotlarni o'zgartirib, o'zingizga moslang!
+"# termizbozor" 
