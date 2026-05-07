@@ -152,3 +152,11 @@ LOGOUT_REDIRECT_URL = '/'
 
 # Site name
 SITE_NAME = "Termiz Bozor Narxlari"
+# ImageKit sozlamalari
+IMAGEKIT_PUBLIC_KEY = os.environ.get('IMAGEKIT_PUBLIC_KEY')
+IMAGEKIT_PRIVATE_KEY = os.environ.get('IMAGEKIT_PRIVATE_KEY')
+IMAGEKIT_URL_ENDPOINT = os.environ.get('IMAGEKIT_URL_ENDPOINT')
+
+# Faqat production'da ImageKit, lokal'da fayl tizimi
+if IMAGEKIT_PRIVATE_KEY:
+    DEFAULT_FILE_STORAGE = 'config.storage.ImageKitStorage'
